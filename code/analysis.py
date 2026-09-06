@@ -8,7 +8,11 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from pathlib import Path
+
+matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 ROOT = Path(__file__).resolve().parent.parent
 FIG = ROOT / 'report' / 'figures'
