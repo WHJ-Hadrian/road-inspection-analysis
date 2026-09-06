@@ -149,3 +149,25 @@ FROM dim_road_case
 WHERE source_channel = '众源车'
 GROUP BY collect_date
 ORDER BY collect_date;
+
+
+-- ************************************************************
+-- Q8 数据质量漏斗：采集 → 通过/驳回 → 驳回原因拆解
+-- 知识点：条件聚合 + 窗口函数做漏斗转化率
+-- ************************************************************
+SELECT
+    COUNT(*) AS total_cases,
+    SUM(CASE WHEN audit_result = '审核通过' THEN 1 ELSE 0 END) AS passed,
+    ROUND(SUM(CASE WHEN audit_result = '审核通过' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS pass_rate,
+    SUM(CASE WHEN audit_result = '驳回' THEN 1 ELSE 0 END) AS rejected,
+    ROUND(SUM(CASE WHEN audit_result = '驳回' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS reject_rate
+FROM dim_road_case;
+
+SELECT
+    reject_reason,
+    COUNT(*) AS cnt,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) AS pct_of_rejected
+FROM dim_road_case
+WHERE audit_result = '驳回'
+GROUP BY reject_reason
+ORDER BY cnt DESC;

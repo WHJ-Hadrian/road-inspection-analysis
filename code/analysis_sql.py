@@ -56,6 +56,14 @@ QUERIES = [
         FROM dim_road_case GROUP BY "星期"
         ORDER BY CASE "星期" WHEN '周一' THEN 1 WHEN '周二' THEN 2 WHEN '周三' THEN 3
                  WHEN '周四' THEN 4 WHEN '周五' THEN 5 WHEN '周六' THEN 6 WHEN '周日' THEN 7 END"""),
+
+    ("Q7 质量漏斗", """
+        SELECT COUNT(*) AS 采集总量,
+               SUM(CASE WHEN "审核结论"='审核通过' THEN 1 ELSE 0 END) AS 审核通过,
+               ROUND(SUM(CASE WHEN "审核结论"='审核通过' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS 通过率,
+               SUM(CASE WHEN "审核结论"='驳回' THEN 1 ELSE 0 END) AS 驳回,
+               ROUND(SUM(CASE WHEN "审核结论"='驳回' THEN 1 ELSE 0 END)*100.0/COUNT(*),1) AS 驳回率
+        FROM dim_road_case"""),
 ]
 
 if __name__ == '__main__':

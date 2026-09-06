@@ -90,3 +90,38 @@ zy = df[df['数据来源']=='众源车']
 print(f"\n众源车平均时滞 {zy['审核时滞天'].mean():.1f} 天，时滞>7天占比 {(zy['审核时滞天']>7).mean()*100:.1f}%")
 
 print("\n分析完成，图表已输出至 report/figures/")
+
+# ---------- 6. 质量漏斗分析 ----------
+passed = audit.get('审核通过', 0)
+rejected = total_n - passed
+reason_reject = df.loc[df['审核结论'] == '驳回', '驳回原因'].value_counts()
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+# 左图：整体漏斗（采集 → 审核通过 / 驳回）
+funnel_steps = ['采集总量', '审核通过', '驳回']
+funnel_vals = [total_n, passed, rejected]
+funnel_colors = [C[0], C[1], C[2]]
+bars = axes[0].barh(funnel_steps[::-1], funnel_vals[::-1], color=funnel_colors[::-1], height=0.5)
+for bar, val in zip(bars, funnel_vals[::-1]):
+    axes[0].text(bar.get_width() + 200, bar.get_y() + bar.get_height()/2,
+                 f'{val:,} ({val/total_n*100:.1f}%)', va='center', fontsize=10)
+axes[0].set_xlim(0, total_n * 1.25)
+axes[0].set_title('数据质量漏斗')
+axes[0].set_xlabel('案件数')
+
+# 右图：驳回原因拆解
+reason_labels = reason_reject.index.tolist()
+reason_vals = reason_reject.values
+bars2 = axes[1].barh(reason_labels[::-1], reason_vals[::-1], color=C[3], height=0.5)
+for bar, val in zip(bars2, reason_vals[::-1]):
+    axes[1].text(bar.get_width() + 10, bar.get_y() + bar.get_height()/2,
+                 f'{val:,} ({val/rejected*100:.1f}%)', va='center', fontsize=10)
+axes[1].set_xlim(0, max(reason_vals) * 1.3)
+axes[1].set_title('驳回原因拆解')
+axes[1].set_xlabel('驳回量')
+
+plt.tight_layout(); plt.savefig(FIG / '图5.png', dpi=150); plt.close()
+
+print(f"\n漏斗分析：采集{total_n} → 通过{passed}({passed/total_n*100:.1f}%) → 驳回{rejected}({rejected/total_n*100:.1f}%)")
+print(f"驳回Top1原因：{reason_reject.index[0]}（{reason_reject.iloc[0]}件，占驳回{reason_reject.iloc[0]/rejected*100:.1f}%）")
